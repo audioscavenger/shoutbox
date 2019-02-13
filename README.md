@@ -1,0 +1,2 @@
+# shoutbox
+PHP databaseless shoutbox
