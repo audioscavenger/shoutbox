@@ -25,7 +25,7 @@ $.ajax({
     if (debug) console.log(data);
     var chatContent = '';
     for (var i in data) {
-      chatContent += "<b>" + data[i].username + ": </b> [" + data[i].timestamp + "] " + data[i].message + "<br>";
+      chatContent += "<b class='text-primary'>" + data[i].username + ": </b><span class='text-muted'>[" + data[i].timestamp + "]</span> " + data[i].message + "<br>";
     }
     $('#chatResults').html(chatContent);
     if (focusFlag == 0) {
@@ -41,7 +41,7 @@ function reload() {
     type: "POST",
     url: "ajax.php",
     dataType: "json",
-    // [{"username":"aa","message":"sdsdf sd asd ","timestamp":"20:22:21","size":0}]
+    // [{"username":"aa","message":"sdsdf sd asd ","timestamp":"20:22:21","size":0}, ..]
     success: function(data){
       if (debug) console.log(data);
       var chatContent = '';
@@ -53,7 +53,8 @@ function reload() {
     if ((focusFlag == 0) && (lastTime != newTime)) {
       document.title = data[0].username + " spoke!";
       lastTime = newTime = data[0].timestamp;
-          $('#chatResults').prop('scrollTop', $('#chatResults').prop('scrollHeight'));	
+      
+      $('#chatResults').prop('scrollTop', $('#chatResults').prop('scrollHeight'));	
     }
    }
  });

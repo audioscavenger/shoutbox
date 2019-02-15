@@ -4,11 +4,16 @@ if (file_exists('chat.json')) {
   $jsonAr = json_decode(file_get_contents('chat.json'), true);
 }
 
-if (isset($_POST) && isset($_POST['username']) && (strlen($_POST['username']) > 0) && (strlen($_POST['message']) > 0)) {
-  if ($_POST['username'] != 'username') {
-    $username = htmlentities(strip_tags(substr($_POST['username'], 0, 20)), ENT_QUOTES);
+if (isset($_POST) && isset($_POST['username']) && (strlen($_POST['username']) > 2) && (strlen($_POST['message']) > 0)) {
+  if ($_POST['username'] != 'ENTER YOUR NAME') {
+    $username = trim(htmlentities(strip_tags(substr($_POST['username'], 0, 20)), ENT_QUOTES));
     $message = stripslashes(htmlentities(strip_tags(substr($_POST['message'], 0, 300)), ENT_QUOTES));
-    $chat = array("username" => $username, "message" => $message, "timestamp" => date('H:i:s',time()), "size" => sizeof($jsonAr));
+    $chat = array(
+      "username" => $username, 
+      "message" => $message, 
+      "timestamp" => date('H:i:s',time()), 
+      "size" => sizeof($jsonAr)
+    );
     $jsonAr[] = $chat;
   }
 }
