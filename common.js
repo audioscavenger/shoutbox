@@ -1,6 +1,55 @@
 // common.js - set of functions developed by AudioScavengeR@Github
 var version = 3.1
 var browser = new Browser();
+var debug = false;
+
+// https://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
+// String.format usage: "{0} is dead, but {1} is alive! {0} {2}".format("ASP", "ASP.NET")
+if (!String.prototype.format) {
+  String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) { 
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+}
+
+// return last item (or at -position) of array
+// aa=[1,2,3];aa.last() // 3
+if (!Array.prototype.last){
+  Array.prototype.last = function(position=1){
+    return this.slice(-position)[0]
+  };
+};
+
+// concat arrays
+Array.prototype.pushArray = function(array) {
+  this.push.apply(this, array);
+};
+
+/*
+// return last item (or at -position) of array
+// oo={0:{"a":"aa"},1:{"b":"bb"}};oo.last() // {1:{"b":"bb"}}
+// UPDATE: this prototype will cause lots of trouble to jQuery
+if (!Object.prototype.last){
+  Object.prototype.last = function(position=1){
+    const key = Object.keys(this).last(position);
+    return {[key]:this[key]};
+  };
+};
+*/
+
+function last(object, position=1) {
+  const key = Object.keys(object).last(position);
+  return {[key]:object[key]};
+}
+
+function getKeyByValue(object, value) {
+  return Object.keys(object).find(key => object[key] === value);
+}
 
 function log(e) { console.log(e); }
 
@@ -55,7 +104,17 @@ function filename(strPpath) {
 }
 
 function is_inArray(value,array) {
-  if (array.indexOf(value) === -1) { return false } else { return true }
+  return (array.indexOf(value) === -1) ? false : true;
+}
+
+function is_array(object) {
+  return (Array.isArray(object)) ? true : false;
+}
+
+// https://stackoverflow.com/questions/24403732/check-if-array-is-empty-or-does-not-exist-js
+function is_empty(array) {
+  // return (!Array.isArray(array) || !array.length) ? true : false;
+  return (!array || !array.length) ? true : false;
 }
 
 // getCSSvalue: element can be idName, className, or element
@@ -92,7 +151,7 @@ function isUrlValid(strUrl) {
 }
 
 // getParent: element can be idName, or element
-function getParent(element, pTagName) {
+function getParent(element, pTagName=null) {
   if (element == null) return null;
   var elem = element;
   // http://www.javascriptkit.com/domref/nodetype.shtml
@@ -317,45 +376,37 @@ function getFromUrl(url, callback, useProxy=false) {
   });
 }
 
+// createTag always return DOM element
 // without Parent, createTag does not attach the element to the document.body
-// todo: see if it's best practice to elm.appendChild(document.createTextNode(content)) instead of lm.textContent = content
-// todo: try to process optArgs such as: elm.title = "my title text";
+// Parent and content can be a String, DOM element, or jquery wrapper
+// todo: see if it's best practice to elm.appendChild(document.createTextNode(content)) instead of elm.textContent = content
+// TODO: try to process optArgs such as: elm.title = "my title text";
+// todo: decide if it's ok to overwrite existing objects' content with null or if null actually is different from blank
 function createTag(tag, id=null, className=null, content=null, Parent=null) {
   elm  = (id && document.getElementById(id)) ? document.getElementById(id) : document.createElement(tag);
   // elm  = document.createDocumentFragment(tag);  // See the use of document fragments for performance
   if (id) elm.id = id;
   if (className) elm.className = className;
-  // content = document.createTextNode(content); 
-  // elm.appendChild(content);
-  // console.log(content);
-  if (content && typeof content === 'object') { elm.appendChild(content); } else { elm.textContent = content; }
+  if (content) {
+    if (typeof content === 'object') {
+      if (content[0]) { elm.appendChild(content[0]); } else { elm.appendChild(content); }
+    } else { elm.textContent = content; }
+  }
   if (Parent) {
-    if (typeof Parent === 'object') { Parent.appendChild(elm); } else { if (document.getElementById(Parent)) document.getElementById(Parent).appendChild(elm); }
-  // } else {
-    // document.body.appendChild(elm);
+    if (typeof Parent === 'object') {
+      if (Parent[0]) { Parent.append(elm); } else { Parent.appendChild(elm); }
+    } else {
+      if (document.getElementById(Parent)) document.getElementById(Parent).appendChild(elm);
+    }
   }
   
   if (arguments.length > 5) {
     var optArgs = Array.prototype.slice.call(arguments, 3, arguments.length);
-    console.log(optArgs);
+    if (debug) console.log(optArgs);
   }
   
   // console.log('createTag: '+elm.id);
   return elm;
-}
-
-// https://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
-// String.format usage: "{0} is dead, but {1} is alive! {0} {2}".format("ASP", "ASP.NET")
-if (!String.prototype.format) {
-  String.prototype.format = function() {
-    var args = arguments;
-    return this.replace(/{(\d+)}/g, function(match, number) { 
-      return typeof args[number] != 'undefined'
-        ? args[number]
-        : match
-      ;
-    });
-  };
 }
 
 MD5 = function(e) {
@@ -423,3 +474,17 @@ MD5 = function(e) {
   for (e = 0; e < f.length; e += 16) q = a, r = b, s = c, t = d, a = k(a, b, c, d, f[e + 0], 7, 3614090360), d = k(d, a, b, c, f[e + 1], 12, 3905402710), c = k(c, d, a, b, f[e + 2], 17, 606105819), b = k(b, c, d, a, f[e + 3], 22, 3250441966), a = k(a, b, c, d, f[e + 4], 7, 4118548399), d = k(d, a, b, c, f[e + 5], 12, 1200080426), c = k(c, d, a, b, f[e + 6], 17, 2821735955), b = k(b, c, d, a, f[e + 7], 22, 4249261313), a = k(a, b, c, d, f[e + 8], 7, 1770035416), d = k(d, a, b, c, f[e + 9], 12, 2336552879), c = k(c, d, a, b, f[e + 10], 17, 4294925233), b = k(b, c, d, a, f[e + 11], 22, 2304563134), a = k(a, b, c, d, f[e + 12], 7, 1804603682), d = k(d, a, b, c, f[e + 13], 12, 4254626195), c = k(c, d, a, b, f[e + 14], 17, 2792965006), b = k(b, c, d, a, f[e + 15], 22, 1236535329), a = l(a, b, c, d, f[e + 1], 5, 4129170786), d = l(d, a, b, c, f[e + 6], 9, 3225465664), c = l(c, d, a, b, f[e + 11], 14, 643717713), b = l(b, c, d, a, f[e + 0], 20, 3921069994), a = l(a, b, c, d, f[e + 5], 5, 3593408605), d = l(d, a, b, c, f[e + 10], 9, 38016083), c = l(c, d, a, b, f[e + 15], 14, 3634488961), b = l(b, c, d, a, f[e + 4], 20, 3889429448), a = l(a, b, c, d, f[e + 9], 5, 568446438), d = l(d, a, b, c, f[e + 14], 9, 3275163606), c = l(c, d, a, b, f[e + 3], 14, 4107603335), b = l(b, c, d, a, f[e + 8], 20, 1163531501), a = l(a, b, c, d, f[e + 13], 5, 2850285829), d = l(d, a, b, c, f[e + 2], 9, 4243563512), c = l(c, d, a, b, f[e + 7], 14, 1735328473), b = l(b, c, d, a, f[e + 12], 20, 2368359562), a = m(a, b, c, d, f[e + 5], 4, 4294588738), d = m(d, a, b, c, f[e + 8], 11, 2272392833), c = m(c, d, a, b, f[e + 11], 16, 1839030562), b = m(b, c, d, a, f[e + 14], 23, 4259657740), a = m(a, b, c, d, f[e + 1], 4, 2763975236), d = m(d, a, b, c, f[e + 4], 11, 1272893353), c = m(c, d, a, b, f[e + 7], 16, 4139469664), b = m(b, c, d, a, f[e + 10], 23, 3200236656), a = m(a, b, c, d, f[e + 13], 4, 681279174), d = m(d, a, b, c, f[e + 0], 11, 3936430074), c = m(c, d, a, b, f[e + 3], 16, 3572445317), b = m(b, c, d, a, f[e + 6], 23, 76029189), a = m(a, b, c, d, f[e + 9], 4, 3654602809), d = m(d, a, b, c, f[e + 12], 11, 3873151461), c = m(c, d, a, b, f[e + 15], 16, 530742520), b = m(b, c, d, a, f[e + 2], 23, 3299628645), a = n(a, b, c, d, f[e + 0], 6, 4096336452), d = n(d, a, b, c, f[e + 7], 10, 1126891415), c = n(c, d, a, b, f[e + 14], 15, 2878612391), b = n(b, c, d, a, f[e + 5], 21, 4237533241), a = n(a, b, c, d, f[e + 12], 6, 1700485571), d = n(d, a, b, c, f[e + 3], 10, 2399980690), c = n(c, d, a, b, f[e + 10], 15, 4293915773), b = n(b, c, d, a, f[e + 1], 21, 2240044497), a = n(a, b, c, d, f[e + 8], 6, 1873313359), d = n(d, a, b, c, f[e + 15], 10, 4264355552), c = n(c, d, a, b, f[e + 6], 15, 2734768916), b = n(b, c, d, a, f[e + 13], 21, 1309151649), a = n(a, b, c, d, f[e + 4], 6, 4149444226), d = n(d, a, b, c, f[e + 11], 10, 3174756917), c = n(c, d, a, b, f[e + 2], 15, 718787259), b = n(b, c, d, a, f[e + 9], 21, 3951481745), a = h(a, q), b = h(b, r), c = h(c, s), d = h(d, t);
   return (p(a) + p(b) + p(c) + p(d)).toLowerCase()
 };
+
+// generate "uniq" md5 value out of 2 or more md5 values, MD% of string otherwise
+// c1="d6581d542c7eaf801284f084478b5fcc"; c2="61bab24e6a40f9830de0557a2afb8dd8";
+function md5Sum(string) {
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce
+  var sum = (arguments.length > 1) ? Array.from(arguments).reduce((x, y) => x + parseInt(y, 16), 0) : string;
+  return MD5(sum.toString(16));
+}
+
+// generate "uniq" md5 value out of 2 md5 values
+// function md5Sum(c1, c2) {
+  // var hexStr = (parseInt(c1, 16) + parseInt(c2, 16)).toString(16);
+  // return MD5(hexStr);
+// }

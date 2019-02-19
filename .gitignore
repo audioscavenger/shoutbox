@@ -1,3 +1,4 @@
+*.json
 /img
 *-journal
 miniweb.exe
